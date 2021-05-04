@@ -1,9 +1,4 @@
 import re
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from pydrive.files import GoogleDriveFile
-from apiclient import errors
-from apiclient import http
 from os import path
 import requests
 from multiprocessing.pool import ThreadPool
@@ -21,58 +16,38 @@ def extractFileId(links):
     print(fileIDs)
     return fileIDs
 
-def downloadQualities(drive,fileid):
-    data = getVideoInfo(fileid)
-    return data
+def downloadQualities(fileid,path,teamdrive=True):
+    downloadFile(id=fileid,destination=path)
+    return [{'path':path,'quality':'original'}]
 
-def MediaToBaseDownloader(drive,fileid,dest):
-    file = drive.CreateFile({"id":fileid})
-    local_fd = open(dest,"wb")
-    request = drive.auth.service.files().get_media(fileId=fileid)
-    media_request = http.MediaIoBaseDownload(local_fd, request)
-    while True:
-        try:
-            download_progress, done = media_request.next_chunk()
-        except errors.HttpError as error:
-            print ('An error occurred: %s' % error)
-            return None
-        if download_progress:
-            print ('Download Progress: %d%%' % int(download_progress.progress() * 100))
-        if done:
-            print ('Download Complete')
-            return dest
+def downloadFile(id, destination):
+    URL = "https://docs.google.com/uc?export=download"
 
-def create_credential():
-    from GoogleAuthV1 import auth_and_save_credential
-    auth_and_save_credential()
+    session = requests.Session()
 
+    response = session.get(URL, params = { 'id' : id }, stream = True)
+    token = getConfirmToken(response)
 
-# Authentication + token creation
-def create_drive_manager():
-    gAuth = GoogleAuth()
-    typeOfAuth = None
-    if not path.exists("credentials.txt"):
-        typeOfAuth = input("type save if you want to keep a credential file, else type nothing")
-    bool = True if typeOfAuth == "save" or path.exists("credentials.txt") else False
-    authorize_from_credential(gAuth, bool)
-    drive: GoogleDrive = GoogleDrive(gAuth)
-    return drive
+    if token:
+        params = { 'id' : id, 'confirm' : token }
+        response = session.get(URL, params = params, stream = True)
 
+    saveResponseContent(response, destination)    
 
-def authorize_from_credential(gAuth, isSaved):
-    if not isSaved: #no credential.txt wanted
-        from GoogleAuthV1 import auth_no_save
-        auth_no_save(gAuth)
-    if isSaved and not path.exists("credentials.txt"):
-        create_credential()
-        gAuth.LoadCredentialsFile("credentials.txt")
-    if isSaved and gAuth.access_token_expired:
-        gAuth.LoadCredentialsFile("credentials.txt")
-        gAuth.Refresh()
-        print("token refreshed!")
-        gAuth.SaveCredentialsFile("credentials.txt")
-    gAuth.Authorize()
-    print("authorized access to google drive API!")
+def getConfirmToken(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+
+    return None
+
+def saveResponseContent(response, destination):
+    CHUNK_SIZE = 32768
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk: # filter out keep-alive new chunks
+                f.write(chunk)
 
 
 def parseCookie(cookie):
@@ -100,25 +75,22 @@ def getVideoInfo(fileid,proxies=None,headers=None):
         'https' : 'http://{}@{}:{}'.format(proxy['auth'],proxy['ip'],proxy['port'])
     }
     print(proxies)
-    response = requests.get('https://drive.google.com/a/kyunkyun.net/get_video_info?docid='+fileid,proxies=proxies,headers=headers)
+    response = requests.get('https://drive.google.com/get_video_info?docid='+fileid,proxies=proxies,headers=headers)
     query = response.text 
+    print(query)
     data = dict(parse.parse_qsl(query))
-    cookie = extractCookie(response.headers)
+    cookie = headers['cookie']
     files = []
     qualities = parseFmtStream(data['fmt_stream_map'])
-    downloads = []
-    if len(qualities) < 2:
-        downloads = qualities
-    else:
-        for i in qualities:
-            if i['quality'] == '720':
-                downloads.append(i)
-    for i in downloads:
-        chunkedDownloader(i['url'],fileid+'_'+i['quality']+'.mp4',cookie,proxies=proxies)
-        files.append({
-            'path' : fileid+'_'+i['quality']+'.mp4',
-            'quality' : i['quality']
-        })
+    for i in qualities:
+        if i['quality'] <= 720:
+            quality = str(i['quality'])
+            path = f'{fileid}_{quality}.mp4'
+            chunkedDownloader(i['url'],path,cookie,proxies=proxies)
+            files.append({
+                'path' : path,
+                'quality' : i['quality']
+            })
     return files
 
 def parseFmtStream(fmt_stream_map):
@@ -129,10 +101,10 @@ def parseFmtStream(fmt_stream_map):
         itag = comp[0]
         url = comp[1]
         itags = {
-            '18' : '360',
-            '59' : '480',
-            '22' : '720',
-            '37' : '1080'
+            '18' : 360,
+            '59' : 480,
+            '22' : 720,
+            '37' : 1080
         }
         data.append({
             'itag' : itag,
@@ -155,7 +127,7 @@ def downloadChunks(data):
     headers = data['headers']
     url = data['url']
     filename = data['filename']
-    proxies = data['proxies'] 
+    proxies = {}
     while True:
         response = requests.head(url,headers=headers,proxies=proxies)
         headers_response = dict(response.headers)

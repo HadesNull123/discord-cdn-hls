@@ -23,23 +23,21 @@ templates = Jinja2Templates(directory="templates")
 celery_app = Celery('tasks', broker='amqp://localhost//')
 mongoClient = pymongo.MongoClient("mongodb+srv://admin:bovDxKtwUSmeABPr@cluster0.ijhu7.mongodb.net/kyunstreaming?retryWrites=true&w=majority")
 logger = get_task_logger(__name__)
-drive = gDriveLib.create_drive_manager()
 mydb = mongoClient["discord_img"]
 video_db = mydb["video"]
 
-BASEURL = 'https://ci3-euw.googleapiscdn.com/discord'
+BASEURL = 'https://discord.kyunkyun.net'
 CACHEROOT = 'apicache'
 
 @celery_app.task
 def uploadProcess(fileid):
     try:
         data = {}
-        files =  gDriveLib.downloadQualities(drive,fileid)
+        files =  gDriveLib.getVideoInfo(fileid,None,{'cookie' : 'S=cloudsearch=R6_s1HYSQQqrxi7XcyjH4aazxiHKT_pUzyX9OBURY8A; SEARCH_SAMESITE=CgQIlZIB; OGPC=19022552-1:; SID=8gcmrhqcYMZnvdNJgLoEnT46zM2_ejuk7g0JFZ-uTXcaVNCNBr1vbYdjloQ7oeQd8lc4Xg.; __Secure-3PSID=8gcmrhqcYMZnvdNJgLoEnT46zM2_ejuk7g0JFZ-uTXcaVNCNR9623XqAule2ALmtZZrnMw.; HSID=ASNedTSudh5_vT9sC; SSID=A-lmY1LqoO5rli544; APISID=xAuti94s-T2jYlAh/AxDiQM23EjiEvTaEZ; SAPISID=0KqBkr6Ul9xct0pE/A85QesDz9bvWS_TED; __Secure-3PAPISID=0KqBkr6Ul9xct0pE/A85QesDz9bvWS_TED; DRIVE_STREAM=MhcJ_jfKyO0; 1P_JAR=2021-05-02-04; NID=214=JSE1GLbi0WMp4NG31nq6hqvbuzlT32Kmj2jHiDcb9TPomKVSoLT8Vou2O1MJz2F4NobEjdhYL_BN6tYSsweROliyzzbcL5O4yaQZvelWKtOCT8sQoMRcckO-i6NJ63AcTZk6IeAr4zoq9sIVZdRX7T-drIwpO1-cdwPM1ANfNF8jja-oil_x9Px3UaNTPHn7m1f7ASDhorVtPrG3FO-LlgGBBgIH0fBLvUbwOZDTV9HbikdYysK16p4k210njJwSqPN71z1Otv2n6oS3Dt72q9h8tIndKkiNHNTnaV_Duxw_swrVKpiwiu0C2mhezhVNEwoBy08JB1nqtG0XD3k-z1vTN_aOcxCt-zaiDhP3; SIDCC=AJi4QfF8wN2nqzwzdBPyTmqEue1fEhWdWhONOc3RWTV28iHUi2xyvkqgThJRyVrgSidBA6qcx3c; __Secure-3PSIDCC=AJi4QfHEqFFP8IaDGoPzynfqDnugXORjxYD58mxnrhM3n8FJ9C7ucjFSOE4yIRK8vxtcPKEabKA'})
         if len(files) > 0:
             for file in files:
                 folder = fileid+'_'+file['quality']
                 videoLib.splitChunks(file['path'],folder)
-                # cookie = random.choice(json.loads(open('cookies.json').read()))
                 uploader = Discord(folder)
                 chunks = uploader.upload()
                 playlist = videoLib.generatePlaylist(chunks)
