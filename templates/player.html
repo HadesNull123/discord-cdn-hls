@@ -1,0 +1,108 @@
+<title>Iframe</title>
+<style>
+body {
+  margin: 0;
+}
+        &.jw-stretch-uniform {
+        video {
+            object-fit: contain;
+        }
+    }
+
+    &.jw-stretch-none {
+        video {
+            object-fit: none;
+        }
+    }
+
+    &.jw-stretch-fill {
+        video {
+            object-fit: cover;
+        }
+    }
+
+    &.jw-stretch-exactfit {
+        video {
+            object-fit: fill;
+        }
+    }
+      
+.video-dimensions {
+    width: 100%;
+    height: 100%;
+    }
+
+</style>
+
+<script  data-cfasync="false" src="https://ssl.p.jwpcdn.com/player/v/8.17.6/jwplayer.js"></script>
+<script type="text/javascript">jwplayer.key = "W7zSm81+mmIsg7F+fyHRKhF3ggLkTqtGMhvI92kbqf/ysE99";</script>
+<body>
+<div id="jwplayer">
+</div>
+<script>
+var playerInstance = jwplayer("jwplayer");
+playerInstance.setup({
+height: "100%",
+width: "100%",
+sources: [
+    {%for i in playlist%}
+    {"file": "{{i['url']}}",
+        "label": "{{i['quality']}}",
+        "default": "true",
+        "type": "{{type}}"
+      },
+    {% endfor %}],
+"image":"{{thumbnail|safe}}",
+tracks:
+                [
+                    { 
+                        file: "{{sub|safe}}",
+                        label: "{{subname}}"
+                    }
+                ],
+playbackRateControls: [0.75, 1, 1.25, 1.5],
+//logo: {
+//        file: "static/kyunlogo.png",
+//        link: "https://kyunkyun.net",
+//        position: "top-left"
+//      },
+});
+playerInstance.on('ready',function() {
+    if (jwplayer().getRenderingMode() == "html5"){
+
+playerInstance.addButton(
+    "static/kyunlogo.png", );
+}
+else{
+alert("your browser doesn't support HTML5");
+}
+console.log("state is :"+playerInstance.getState());
+});
+// playerInstance.addButton(
+//    '/static/img/icon-download.png',
+//    'Download video', 
+//    function() {  
+//     window.open(playerInstance.getPlaylistItem()['file'], '_blank').blur();
+//  },
+// 'download'
+// );
+</script>
+</body>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5WD5JTCMRK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5WD5JTCMRK');
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-176558902-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-176558902-1');
+</script>
