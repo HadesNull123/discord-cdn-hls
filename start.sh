@@ -1,0 +1,1 @@
+sudo nohup uvicorn --reload --host 0.0.0.0 --port 80 --workers 10 server:app &sudo nohup celery -A server.celery_app worker --loglevel=INFO --concurrency=1 -n worker1@%h  & sudo tail -f nohup.out &&fg
