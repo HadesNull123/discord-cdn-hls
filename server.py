@@ -36,7 +36,7 @@ def uploadProcess(fileid):
         files =  gDriveLib.getVideoInfo(fileid,None,{'cookie' : 'S=cloudsearch=R6_s1HYSQQqrxi7XcyjH4aazxiHKT_pUzyX9OBURY8A; SEARCH_SAMESITE=CgQIlZIB; OGPC=19022552-1:; SID=8gcmrhqcYMZnvdNJgLoEnT46zM2_ejuk7g0JFZ-uTXcaVNCNBr1vbYdjloQ7oeQd8lc4Xg.; __Secure-3PSID=8gcmrhqcYMZnvdNJgLoEnT46zM2_ejuk7g0JFZ-uTXcaVNCNR9623XqAule2ALmtZZrnMw.; HSID=ASNedTSudh5_vT9sC; SSID=A-lmY1LqoO5rli544; APISID=xAuti94s-T2jYlAh/AxDiQM23EjiEvTaEZ; SAPISID=0KqBkr6Ul9xct0pE/A85QesDz9bvWS_TED; __Secure-3PAPISID=0KqBkr6Ul9xct0pE/A85QesDz9bvWS_TED; DRIVE_STREAM=MhcJ_jfKyO0; 1P_JAR=2021-05-02-04; NID=214=JSE1GLbi0WMp4NG31nq6hqvbuzlT32Kmj2jHiDcb9TPomKVSoLT8Vou2O1MJz2F4NobEjdhYL_BN6tYSsweROliyzzbcL5O4yaQZvelWKtOCT8sQoMRcckO-i6NJ63AcTZk6IeAr4zoq9sIVZdRX7T-drIwpO1-cdwPM1ANfNF8jja-oil_x9Px3UaNTPHn7m1f7ASDhorVtPrG3FO-LlgGBBgIH0fBLvUbwOZDTV9HbikdYysK16p4k210njJwSqPN71z1Otv2n6oS3Dt72q9h8tIndKkiNHNTnaV_Duxw_swrVKpiwiu0C2mhezhVNEwoBy08JB1nqtG0XD3k-z1vTN_aOcxCt-zaiDhP3; SIDCC=AJi4QfF8wN2nqzwzdBPyTmqEue1fEhWdWhONOc3RWTV28iHUi2xyvkqgThJRyVrgSidBA6qcx3c; __Secure-3PSIDCC=AJi4QfHEqFFP8IaDGoPzynfqDnugXORjxYD58mxnrhM3n8FJ9C7ucjFSOE4yIRK8vxtcPKEabKA'})
         if len(files) > 0:
             for file in files:
-                folder = fileid+'_'+file['quality']
+                folder = fileid+'_'+str(file['quality'])
                 videoLib.splitChunks(file['path'],folder)
                 uploader = Discord(folder)
                 chunks = uploader.upload()
